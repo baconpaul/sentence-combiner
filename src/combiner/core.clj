@@ -7,12 +7,13 @@
                                   CoreAnnotations$NamedEntityTagAnnotation
                                   )
            (edu.stanford.nlp.trees TreeCoreAnnotations$TreeAnnotation)
+           (edu.stanford.nlp.semgraph SemanticGraphCoreAnnotations$BasicDependenciesAnnotation)
            )
   )
 
 (defn new-pipeline []
   (let [p       (doto  (java.util.Properties.)
-                  (.setProperty "annotators" "tokenize, ssplit, pos, lemma, ner, parse, dcoref")
+                  (.setProperty "annotators" "tokenize, ssplit, pos, lemma, ner, parse, depparse, dcoref")
                   (.setProperty "ssplit.isOneSentence" "true")
                   )
         pl      (StanfordCoreNLP. p )
@@ -37,10 +38,30 @@
                             :pos (.get t CoreAnnotations$PartOfSpeechAnnotation)
                             :ner (.get t CoreAnnotations$NamedEntityTagAnnotation)
                             })
+
+        dep  (.get sent SemanticGraphCoreAnnotations$BasicDependenciesAnnotation)
+
+        sentmap     (map tok_to_map toks)
         
-        res {:sent  (map tok_to_map toks)
+        depl        (map #(.getNodeByIndex dep (inc  %)) (range (count sentmap)))
+        depedge     (map #(.incomingEdgeList dep %) depl )
+        depann      (map #(if (not (empty? %)) (map (fn [s] (keyword (.toString  (.getRelation s)))) %) [:root] ) depedge)
+
+        sentgram    (->> (map vector
+                              (map #(.lemma %) depl)
+                              (map #(apply hash-set %) depann)
+                              (map #(.index %) depl)
+                              )
+                         (map  #(apply hash-map (interleave [ :lemma :grammar :idx] %)))
+                         )
+
+        sentmap-w-gram (map (fn [w g] (assoc w :grammar (:grammar g))) sentmap sentgram )
+
+        res {:sent  sentmap-w-gram
              :tree  (.get sent TreeCoreAnnotations$TreeAnnotation)
+             :dep   dep
              }
+        
         ]
     res
     ))
@@ -84,15 +105,35 @@
 (defn multi-nnp-fix
   "If the config has an NNP substitution and the NNP appears multiple times, voila"
   [config s]
-  (loop [sent s
-         seen-first false
-         result []
-         ]
-    (if (empty? sent)
-      result
-      (recur (rest sent) seen-first (concat result [(first sent)]))
-      )
-    )
+  (if (not (contains? config :NNP))
+    s
+    (let [nnp (:NNP config)
+          ;; ERROR CONDITION for nnp len > 1
+          _   (if (> (count nnp) 1) (throw (Exception. "Only handle NNP size 1 for now")))
+          ns (first nnp)
+          name (first ns)
+          subs (second ns)
+          sub-to-obj  {"he" "him" "she" "her" "it" "it" "they" "them"}
+          ]
+      (loop [sent s
+             seen-first false
+             result []
+             ]
+        (if (empty? sent)
+          result
+          (let [fs   (first sent)
+                rs   (rest sent)
+                isnnp (= (:word fs) name)
+                next-seen-first (or seen-first isnnp)
+                usefs (if (and isnnp seen-first)
+                        (cond
+                          (not (nil? (:dobj (:grammar fs)))) (assoc fs :word (get sub-to-obj subs))
+                          :else (assoc fs :word subs))
+                        fs)
+                ]
+            (recur rs next-seen-first (conj result usefs)))
+          )
+        )))
   )
 
 ;; OK so lets start with some cause and effect
@@ -112,8 +153,8 @@
                           (concat [(insel "because")] pos_cause [(inspair ",")] pos_a)
                           ]
                          (map case-fix)
-                         #_(map (partial  multi-nnp-fix config))
-                         #_(map sentence-string)
+                         (map (partial  multi-nnp-fix config))
+                         (map sentence-string)
                          )
          
          ]
@@ -124,17 +165,25 @@
 
 (def combine-samples
   [["We were sad." "Jim's dog died last week."]
-   ["Hillary didn't become president." "Hillary lost Michigan."]
-   ["Frank walked to school." "Frank lost his bike." {:NNP { "Frank", "he" }}]
-
-   ;; This one doesn't work with NNP substitution yet
-   ["Frank was scared of dogs." "A dog bit Frank when he was small."]
+   ["Hillary didn't become president." "Hillary lost Michigan." {:NNP [["Hillary" "she"]]}]
+   ["Frank walked to school." "Frank lost his bike." {:NNP [["Frank" "he"]] }]
+   ["Frank was scared of dogs." "A dog attacked Frank." {:NNP [["Frank" "he"]]}]
    ]
   )
 
-#_(let [res   (map #(apply combine-cause %) combine-samples)]
-    (print res)
-    res
-    )
-(multi-nnp-fix (last (nth combine-samples 2)) (first  (apply combine-cause (nth combine-samples 2))))
+(let [res   (map #(apply combine-cause %) combine-samples)]
+  (print res)
+  res
+  )
+#_(multi-nnp-fix (last (nth combine-samples 2)) (first  (apply combine-cause (nth combine-samples 2))))
 
+
+(apply combine-cause (last combine-samples))
+
+#_(map :dep  [(sentence-structure "A dog attacked Frank.")
+              (sentence-structure "Frank was scared of dogs.")])
+
+
+#_(:sent  (sentence-structure "A dog attacked Frank."))
+
+#_ (:foo #{:foof :bar})
