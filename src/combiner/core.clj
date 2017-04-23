@@ -1,11 +1,10 @@
 (ns combiner.core
   (:require [combiner.combiners :as combiners])
+  (:require [combiner.nlp-mechanics :as nlp])
   )
 
 
-;; OK so here is the combining logic once I've done that mechanics
-
-
+;; Core is just sample cases for now. Eventually we will eliminate this
 (def combine-cause-samples
   [["We were sad." "Jim's dog died last week." {}]
    ["Hillary didn't become president." "Hillary lost Michigan." {:NNP [["Hillary" "she"]]}]
@@ -21,9 +20,31 @@
    ]
   )
 
+(def combine-single-adjectives-samples
+  [
+   ["The gems glittered in the sunlight." "The sunlight was bright." {}]
+   ["The leaves fall from the trees." "The leaves are colorful." {}]
+   ["Honey oozed from the jar." "The honey was sticky." {}]
+   ["Bacon sizzled in the pan." "The pan was hot." {}]
+   ["I bit into the peach." "The peach was tasty." {}]
+   ])
+
+(def combine-adverbs-of-manner-samples
+  [
+   ["LeBron James dunked the basketball." "He dunked it powerfully." {}]
+   ["The runner ran ten miles." "He ran easily." {}]
+   ["Maria gave a speech to the school." "She gave the speech confidently." {}]
+   ;; ["Jose welcomed the new student." "He welcomed her warmly." {}] 
+   ["Robert climbed the mountain." "He climbed bravely." {}]
+   ["Miles painted the model airplane." "He painted it carefully." {}]
+   ])
+
 (def combine-samples
-  {:cause combine-cause-samples
-   :although combine-although-samples
+  {
+   ;;:cause combine-cause-samples
+   ;; :although combine-although-samples
+   ;;:single-adjectives combine-single-adjectives-samples
+   :adverbs-of-manner combine-adverbs-of-manner-samples
    }
   )
 
@@ -37,6 +58,8 @@
     (let [cfn (condp = k
                 :cause combiners/combine-cause
                 :although combiners/combine-although
+                :single-adjectives combiners/combine-single-adjectives
+                :adverbs-of-manner combiners/combine-adverbs-of-manner
                 )
           res (apply cfn smp)
           sr  #(clojure.string/join (repeat 80 %))
@@ -56,4 +79,11 @@
       (println (sr "-"))
       )
     ))
+
+(-> combine-adverbs-of-manner-samples
+    (nth 3)
+    (nth 1)
+    (nlp/sentence-structure )
+    )
+
 

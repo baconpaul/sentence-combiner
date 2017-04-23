@@ -4,7 +4,7 @@
 (defn insert-pair [s] { :word s :pos s :ner "O"})
 
 (def comma (insert-pair ","))
-(def period (insert-el "."))
+(def period (insert-pair "."))
 
 
 (defn case-fix
@@ -13,7 +13,7 @@
   [s]
   (concat [ (update-in (first s) [:word] clojure.string/capitalize)]
           (map #(cond
-                  (= (:pos %) "NNP") %
+                  (and  (= (:pos %) "NNP") (not (= (:ner %) "O"))) %
                   :else (update-in % [:word] clojure.string/lower-case)
                   ) (rest s) )
           [ period ]
@@ -25,7 +25,7 @@
   [s]
   (let [spaces (concat [ "" ] (rest  (map #(cond
                                              (= (:pos %) "POS") ""
-                                             (= (:pos %) "RB") ""
+                                             (and  (= (:pos %) "RB") false #_(contains an apostrophe)) ""
                                              (= (:pos %) ".") ""
                                              (= (:pos %) ",") ""
                                              :else " "
