@@ -11,13 +11,18 @@
   "Given a collection of POS tagged words perhaps with manual inserts, fix the capitalization.
   We assume that we are a single sentence, and for now assume POS as 'NNP' is the indicator of proper noun (but should use ner later)"
   [s]
-  (concat [ (update-in (first s) [:word] clojure.string/capitalize)]
-          (map #(cond
-                  (and  (= (:pos %) "NNP") (not (= (:ner %) "O"))) %
-                  :else (update-in % [:word] clojure.string/lower-case)
-                  ) (rest s) )
-          [ period ]
-          )
+  (let [capitalized (concat [ (update-in (first s) [:word] clojure.string/capitalize)]
+                            (map #(cond
+                                    (and  (= (:pos %) "NNP") (not (= (:ner %) "O"))) %
+                                    :else (update-in % [:word] clojure.string/lower-case)
+                                    ) (rest s) )
+                            )
+        final       (if (= (:pos (last capitalized)) ".")
+                      capitalized
+                      (concat capitalized [period])
+                      )
+        ]
+    final)
   )
 
 (defn sentence-string
