@@ -40,6 +40,7 @@
   (doall
    (for [tcase ["We love fun!"
                 "Jim didn't understand the problem."
+                "Jim was running quickly, then he fell down the deep well without recourse!"
                 "Walruses are animals."
                 "Despite the long time it took, we ended up finding Frank underneath the desk."
                 ] ]
@@ -52,7 +53,22 @@
          (is (= p tcase))
          ))
      ))
+  )
+
+(deftest nnpfix-test
+  (let [s (nlp/sentence-structure "Jim went to the beach and Jim had a beer.")
+        r (sm/multi-nnp-fix { :NNP [["Jim" "he"]]} (:sent s))
+        fin ( -> r (sm/case-fix) (sm/sentence-string))
+        ]
+    (is (= fin "Jim went to the beach and he had a beer."))
+    )
+
+  #_(let [s (nlp/sentence-structure "Frank was on the farm, and a dog attacked Frank.")
+          r (sm/multi-nnp-fix { :NNP [["Frank" "he"]]} (:sent s))
+          fin ( -> r (sm/case-fix) (sm/sentence-string))
+          ]
+      (is (= (:sent s) "Jim went to the beach and he had a beer."))
+      )
 
   )
 
-;; TO DO: Test that nnp substitution

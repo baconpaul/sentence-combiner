@@ -30,7 +30,7 @@
   [s]
   (let [spaces (concat [ "" ] (rest  (map #(cond
                                              (= (:pos %) "POS") ""
-                                             (and  (= (:pos %) "RB") false #_(contains an apostrophe)) ""
+                                             (and  (= (:pos %) "RB") (.contains (:word %) "'")) ""
                                              (= (:pos %) ".") ""
                                              (= (:pos %) ",") ""
                                              :else " "
