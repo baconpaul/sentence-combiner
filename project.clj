@@ -7,4 +7,6 @@
                  [org.clojure/clojure "1.8.0"]
                  [edu.stanford.nlp/stanford-corenlp "3.7.0"]
                  [edu.stanford.nlp/stanford-corenlp "3.7.0" :classifier "models"]
-                 ])
+                 ]
+  :main combiner.core
+  )

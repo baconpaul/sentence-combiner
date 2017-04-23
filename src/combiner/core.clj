@@ -41,49 +41,45 @@
 
 (def combine-samples
   {
-   ;;:cause combine-cause-samples
-   ;; :although combine-although-samples
-   ;;:single-adjectives combine-single-adjectives-samples
+   :cause combine-cause-samples
+   :although combine-although-samples
+   :single-adjectives combine-single-adjectives-samples
    :adverbs-of-manner combine-adverbs-of-manner-samples
    }
   )
 
 
-(do
-  (println " ")
-  (println " ")
-  (for [[k,v] combine-samples
-        smp   v
-        ]
-    (let [cfn (condp = k
-                :cause combiners/combine-cause
-                :although combiners/combine-although
-                :single-adjectives combiners/combine-single-adjectives
-                :adverbs-of-manner combiners/combine-adverbs-of-manner
-                )
-          res (apply cfn smp)
-          sr  #(clojure.string/join (repeat 80 %))
-          ]
-      (println (sr "="))
-      (println "| INPUT   : [" (first smp) "]" )
-      (println "|         :   -" k "->" )
-      (println "|         : [" (second smp) "]" )
-      (println "| CONFIG  :"  (last smp ))
-      (println (sr "-"))
-      (println "| GOOD : ")
-      (doall (map  #(println "|   > " %) (:good res)))
-      (println "| SOSO : ")
-      (doall (map  #(println "|   > " %) (:soso res)))
-      (println "| WRONG: ")
-      (doall (map  #(println "|   > " %) (:wrong res)))
-      (println (sr "-"))
-      )
-    ))
+(defn -main []
+  (do
+    (println "Running samples")
+    (println " ")
+    (doall
+     (for [[k,v] combine-samples
+           smp   v
+           ]
+       (let [cfn (condp = k
+                   :cause combiners/combine-cause
+                   :although combiners/combine-although
+                   :single-adjectives combiners/combine-single-adjectives
+                   :adverbs-of-manner combiners/combine-adverbs-of-manner
+                   )
+             res (apply cfn smp)
+             sr  #(clojure.string/join (repeat 80 %))
+             ]
+         (println (sr "="))
+         (println "| INPUT   : [" (first smp) "]" )
+         (println "|         :   -" k "->" )
+         (println "|         : [" (second smp) "]" )
+         (println "| CONFIG  :"  (last smp ))
+         (println (sr "-"))
+         (println "| GOOD : ")
+         (doall (map  #(println "|   > " %) (:good res)))
+         (println "| SOSO : ")
+         (doall (map  #(println "|   > " %) (:soso res)))
+         (println "| WRONG: ")
+         (doall (map  #(println "|   > " %) (:wrong res)))
+         (println (sr "-"))
+         )
+       ))))
 
-(-> combine-adverbs-of-manner-samples
-    (nth 3)
-    (nth 1)
-    (nlp/sentence-structure )
-    )
-
-
+(-main)
