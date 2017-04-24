@@ -64,6 +64,7 @@
                    :adverbs-of-manner combiners/combine-adverbs-of-manner
                    )
              res (apply cfn smp)
+             rbh (group-by :hint res)
              sr  #(clojure.string/join (repeat 80 %))
              ]
          (println (sr "="))
@@ -72,13 +73,12 @@
          (println "|         : [" (second smp) "]" )
          (println "| CONFIG  :"  (last smp ))
          (println (sr "-"))
-         (println "| GOOD : ")
-         (doall (map  #(println "|   > " %) (:good res)))
-         (println "| SOSO : ")
-         (doall (map  #(println "|   > " %) (:soso res)))
-         (println "| WRONG: ")
-         (doall (map  #(println "|   > " %) (:wrong res)))
-         (println (sr "-"))
+         (doall 
+          (for [[rk,rv] rbh]
+            (do 
+              (println "|" rk)
+              (doall (map  #(println "|   > " (:sentence  %)) rv)))
+            ))
          )
        ))))
 

@@ -21,24 +21,26 @@
                         (map sm/case-fix)
                         (map (partial  sm/multi-nnp-fix config))
                         (map sm/sentence-string)
+                        (map (fn [ v] { :sentence v :hint :correct }))
                         )
         soso      (->> [
-                        (concat pos-cause [(sm/insert-el "and") ] pos-a)
+                        {:sentence (concat pos-cause [(sm/insert-el "and") ] pos-a) :hint :better-combiner}
                         ]
-                       (map sm/case-fix)
-                       (map sm/sentence-string))
+                       (map (fn [v] (update v :sentence sm/case-fix)) )
+                       (map (fn [v] (update v :sentence sm/sentence-string)) )
+
+                       )
         wrong     (->> [
-                        (concat pos-cause [(sm/insert-el "because") ] pos-a)
-                        (concat pos-cause [(sm/insert-el "although") ] pos-a)
+                        {:sentence (concat pos-cause [(sm/insert-el "because") ] pos-a) :hint :wrong-order}
+                        {:sentence (concat pos-cause [(sm/insert-el "although") ] pos-a) :hint :wrong-order}
                         ]
-                       (map sm/case-fix)
-                       (map sm/sentence-string)
+                       (map (fn [v] (update v :sentence sm/case-fix)) )
+                       (map (fn [v] (update v :sentence sm/sentence-string)) )
+
                        )
         
         ]
-    {:good  good
-     :soso soso
-     :wrong wrong}
+    (concat good soso wrong )
     )
   
   )
@@ -59,21 +61,17 @@
                         (map sm/case-fix)
                         (map (partial  sm/multi-nnp-fix config))
                         (map sm/sentence-string)
+                        (map (fn [ v] {:sentence v :hint :correct}))
                         )
         soso      (->> [
                         ]
-                       (map sm/case-fix)
-                       (map sm/sentence-string))
+                       )
         wrong     (->> [
                         ]
-                       (map sm/case-fix)
-                       (map sm/sentence-string)
                        )
         
         ]
-    {:good  good
-     :soso soso
-     :wrong wrong}
+    (concat good soso wrong)
     ))
 
 
@@ -122,10 +120,8 @@
                    (sm/sentence-string)
                    )
         ]
-
-    ;;[subj]
-    ;;split-subj
-    { :good [res] :soso [] :wrong []}
+    
+    [{:sentence res :hint :correct} ]
     
     
     )
@@ -176,10 +172,9 @@
                    )
 
         ]
-    {:good [ res] :soso [] :wrong []}
+    [ {:sentence res :hint :correct }]
     )
   
   )
 
 
-(apply combine-adverbs-of-manner  ["The runner ran ten miles." "He ran easily." {}])
