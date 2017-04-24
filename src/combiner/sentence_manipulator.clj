@@ -82,6 +82,22 @@
   [ s op ]
   (w/walk
    (fn [v]  (if (op v) v nil ) )
-   #(filter (comp not nil?) %)
-   (tree-seq (comp not nil?) (fn [v] (.getChildrenAsList v)) (:tree s)))
+   #(filter (comp not nil?) %) 
+   (tree-seq (comp not nil?) (fn [v] (.getChildrenAsList v)) (:tree s))   )
   )
+
+(defn find-label-in-tree
+  "Given a structured sentence and a label find the nodes with that label"
+  [s lab]
+  (find-in-tree s #(= (.toString (.label %)) lab))
+  )
+
+(defn tree-terminal-strings
+  [t]
+  (w/walk
+   (fn [v]  (if (empty? (.getChildrenAsList v)) (.value v) nil))
+   #(filter (comp not nil?) %)
+   (tree-seq (comp not nil?) (fn [v] (.getChildrenAsList v)) t))
+  )
+
+

@@ -62,22 +62,16 @@
         ]
     (is (= fin "Jim went to the beach and he had a beer."))
     )
-
-  #_(let [s (nlp/sentence-structure "Frank was on the farm, and a dog attacked Frank.")
-          r (sm/multi-nnp-fix { :NNP [["Frank" "he"]]} (:sent s))
-          fin ( -> r (sm/case-fix) (sm/sentence-string))
-          ]
-      (is (= (:sent s) "Jim went to the beach and he had a beer."))
-      )
-
   )
 
 (deftest find-in-tree-test
   (let [s  (nlp/sentence-structure "Robert climbed the mountain.")
         vp (sm/find-in-tree s #(= (.toString (.label %)) "VP"))
+        v2 (sm/find-label-in-tree s "VP")
         ]
     (is (= (.toString  (first  vp)) "(VP (VBD climbed) (NP (DT the) (NN mountain)))"))
     (is (= (count vp) 1))
     (is (= (map #(.toString (.label %)) (.getChildrenAsList (first vp))) ["VBD" "NP"]))
+    (is (= vp v2))
     )
   )

@@ -157,27 +157,58 @@
                           )
         vtgt            (first cand-vtgt)
         adv             (first cand-adv)
-
-        ;; So OK now we need to start creating some combinations. Lets do the simplest of just
-        ;; insert the adjective before the subject.
-        split-subj        (split-with
-                           #(not (= (clojure.string/lower-case (:word vtgt))  ;; Conjugation will make this fail
-                                    (clojure.string/lower-case  (:word %))))
-                           (drop-last (:sent  ss-stmt)))
-        
-        ;; ERROR CHECKING HERE PLEASE
-        res   (->  (concat (first split-subj) [adv] (second split-subj))
-                   (sm/case-fix)
-                   (sm/sentence-string)
-                   )
-
-
-        ;; Now if we find the span of the verb phrase we can also insert it correct after that
-        
         ]
-    [ {:sentence res :hint :correct }]
+    (->> (concat
+          ;; Adjective before verb - correct
+          (let [split-subj        (split-with
+                                   #(not (= (clojure.string/lower-case (:word vtgt)) ;; Conjugation will make this fail
+                                            (clojure.string/lower-case  (:word %))))
+                                   (drop-last (:sent  ss-stmt)))
+                
+                ;; ERROR CHECKING HERE PLEASE
+                resa   (->  (concat (first split-subj) [adv] (second split-subj))
+                            (sm/case-fix)
+                            )
+                res    (sm/sentence-string resa)
+                rnp    (sm/sentence-string (filter #(not (= (:pos %) ".")) resa))
+                ]
+            
+            [
+             {:sentence res :hint :correct }
+             {:sentence rnp :hint :punctuation }
+             ]
+            )
+          ;; Adverb after noun phrase - correct
+          (try  (let [ ;; Now if we find the span of the verb phrase we can also insert it correct after that
+                      vp    (sm/find-label-in-tree ss-stmt "VP")
+                      np    (if (= (count vp) 1) (first vp) (throw (ex-info "Got more than one VP in statement" { :vp vp :ss-stmt ss-stmt })))
+                      npch  (filter #(= (.toString (.label %)) "NP")  (.getChildrenAsList np))
+                      fnp   (if (= (count npch) 1) (first npch) (throw (ex-info "Got more than one NP in VP statement" {:np np :ss-stmt ss-stmt})))
+                      wrdnp (sm/tree-terminal-strings fnp)
+
+                      ;; For now make a bad assumption that the last word of the nounphrase is the one we want
+                      sw    (last wrdnp)
+                      split-subj        (split-with
+                                         #(not (= (clojure.string/lower-case sw)
+                                                  (clojure.string/lower-case (:word %))))
+                                         (drop-last (:sent  ss-stmt)))
+                      resa   (->  (concat (first split-subj)  [(first (second split-subj)) adv] (rest  (second split-subj)))
+                                  (sm/case-fix)
+                                  )
+                      res    (sm/sentence-string resa)
+                      rnp    (sm/sentence-string (filter #(not (= (:pos %) ".")) resa))
+                      ]
+                  [
+                   {:sentence res :hint :correct }
+                   {:sentence rnp :hint :punctuation }
+                   ]
+                  )
+                (catch Exception  e (do (println e) [nil])))
+          )
+         (filter (comp not nil?))
+         )
     )
-  
   )
+
 
 
