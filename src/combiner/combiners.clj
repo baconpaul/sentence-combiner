@@ -171,6 +171,9 @@
                    (sm/sentence-string)
                    )
 
+
+        ;; Now if we find the span of the verb phrase we can also insert it correct after that
+        
         ]
     [ {:sentence res :hint :correct }]
     )

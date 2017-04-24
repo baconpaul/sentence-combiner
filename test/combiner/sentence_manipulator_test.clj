@@ -72,3 +72,12 @@
 
   )
 
+(deftest find-in-tree-test
+  (let [s  (nlp/sentence-structure "Robert climbed the mountain.")
+        vp (sm/find-in-tree s #(= (.toString (.label %)) "VP"))
+        ]
+    (is (= (.toString  (first  vp)) "(VP (VBD climbed) (NP (DT the) (NN mountain)))"))
+    (is (= (count vp) 1))
+    (is (= (map #(.toString (.label %)) (.getChildrenAsList (first vp))) ["VBD" "NP"]))
+    )
+  )

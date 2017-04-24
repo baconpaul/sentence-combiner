@@ -1,4 +1,6 @@
-(ns combiner.sentence-manipulator)
+(ns combiner.sentence-manipulator
+  (:require [clojure.walk :as w])
+  )
 
 (defn insert-el [s] { :word s :pos "INSERTED" :ner "O"})
 (defn insert-pair [s] { :word s :pos s :ner "O"})
@@ -75,3 +77,11 @@
         )))
   )
 
+(defn find-in-tree
+  "Given a structured sentence and a filter operator find the elements matching the filter"
+  [ s op ]
+  (w/walk
+   (fn [v]  (if (op v) v nil ) )
+   #(filter (comp not nil?) %)
+   (tree-seq (comp not nil?) (fn [v] (.getChildrenAsList v)) (:tree s)))
+  )
