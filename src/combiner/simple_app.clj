@@ -110,6 +110,4 @@
     )
   )
 
-(make-simple-app)
-
-(:hi  (binding [*read-eval* false] (read-string "{:hi 1 }")))
+#_(make-simple-app)

@@ -11,7 +11,9 @@ It's also woefully incomplete, and really only does a few things so we can discu
 * Install clojure and leiningen. This is most easily done with "brew install leiningen" on macos.
 * In the main directory of the project (the one containing project.clj) type "lein test". This should
 show tests passing.
-* Then if they pass do "lein run"
+* Then if they pass do "lein run" and it will run the examples
+* There's a super little crappy AWT app to play around with it. To run that type "lein app". The first time you hit
+"combine" it will load stanford NLP which is slow to start.
 * Then in your favorite clojure repl environment play around with core.clj and the libraries
 
 ## License

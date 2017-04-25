@@ -32,7 +32,6 @@
                        )
         wrong     (->> [
                         {:sentence (concat pos-cause [(sm/insert-el "because") ] pos-a) :hint :wrong-order}
-                        {:sentence (concat pos-cause [(sm/insert-el "although") ] pos-a) :hint :wrong-order}
                         ]
                        (map (fn [v] (update v :sentence sm/case-fix)) )
                        (map (fn [v] (update v :sentence sm/sentence-string)) )

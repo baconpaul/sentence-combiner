@@ -9,4 +9,5 @@
                  [edu.stanford.nlp/stanford-corenlp "3.7.0" :classifier "models"]
                  ]
   :main combiner.core
+  :aliases { "app" [ "run" "-m" "combiner.simple-app/make-simple-app"]}
   )
