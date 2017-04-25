@@ -85,6 +85,7 @@
 (-main)
 
 #_(combiners/combine-cause "We ate ice cream." "The day was hot." {})
+
 #_(combiners/combine-adverbs-of-manner "We climbed the hill." "We climbed rapidly." {})
 
 #_ (tree-seq (comp not nil?) (fn [v] (.getChildrenAsList v)) (:tree  (nlp/sentence-structure "We fed the dog ice cream.")))
@@ -92,3 +93,5 @@
 #_(combiners/combine-cause "Paul was happy." "Paul was writing clojure." { :NNP [["Paul" "she"]]})
 #_ (-> (nlp/sentence-structure "Patrick Henry opposed new British taxes and he gave a speech and the speech was powerful to inspire the colonists.")
        :dep)
+
+

@@ -77,6 +77,29 @@
         )))
   )
 
+(defn omit-each-punct
+  "Given a structured sentence, for each bit of punctuation return a new sentence with it stripped"
+  [insent]
+  (loop [s insent
+         p []
+         r []]
+    (if (empty? s)
+      r
+      (let [h  (first s)
+            t  (rest s)
+            rn (if (or  (= (:pos h) ".")
+                        (= (:pos h) ",")
+                        )
+                 (conj r (concat p t))
+                 r
+                 )
+            pn (conj p h)
+            ]
+        (recur t pn rn)
+        ))
+    )
+  )
+
 (defn find-in-tree
   "Given a structured sentence and a filter operator find the elements matching the filter"
   [ s op ]

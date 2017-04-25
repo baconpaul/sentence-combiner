@@ -75,3 +75,15 @@
     (is (= vp v2))
     )
   )
+
+(deftest omit-punct-test
+  (let [s (:sent (nlp/sentence-structure "Paul was happy, but Fred was short."))
+        r (sm/omit-each-punct s)
+        t (map sm/sentence-string r)
+        ]
+    (is (= (count r) 2))
+    (is (= (first t) "Paul was happy but Fred was short."))
+    (is (= (second t) "Paul was happy, but Fred was short"))
+    ))
+
+

@@ -170,13 +170,14 @@
                             (sm/case-fix)
                             )
                 res    (sm/sentence-string resa)
-                rnp    (sm/sentence-string (filter #(not (= (:pos %) ".")) resa))
+                rnps   (sm/omit-each-punct resa)
                 ]
             
-            [
-             {:sentence res :hint :correct }
-             {:sentence rnp :hint :punctuation }
-             ]
+            (concat
+             [ {:sentence res :hint :correct } ]
+             (map (fn [v] { :sentence (sm/sentence-string  v) :hint :punctuation } ) rnps)
+             )
+            
             )
           ;; Adverb after noun phrase - correct
           (try  (let [ ;; Now if we find the span of the verb phrase we can also insert it correct after that
@@ -196,12 +197,12 @@
                                   (sm/case-fix)
                                   )
                       res    (sm/sentence-string resa)
-                      rnp    (sm/sentence-string (filter #(not (= (:pos %) ".")) resa))
+                      rnps   (sm/omit-each-punct resa)
                       ]
-                  [
-                   {:sentence res :hint :correct }
-                   {:sentence rnp :hint :punctuation }
-                   ]
+                  (concat
+                   [{:sentence res :hint :correct }]
+                   (map (fn [v] { :sentence (sm/sentence-string  v) :hint :punctuation } ) rnps)
+                   )
                   )
                 (catch Exception  e (do (println e) [nil])))
           )
