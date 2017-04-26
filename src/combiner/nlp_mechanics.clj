@@ -5,6 +5,7 @@
                                   CoreAnnotations$TextAnnotation
                                   CoreAnnotations$PartOfSpeechAnnotation
                                   CoreAnnotations$NamedEntityTagAnnotation
+                                  CoreAnnotations$LemmaAnnotation
                                   )
            (edu.stanford.nlp.trees TreeCoreAnnotations$TreeAnnotation)
            (edu.stanford.nlp.semgraph SemanticGraphCoreAnnotations$BasicDependenciesAnnotation)
@@ -38,6 +39,7 @@
         tok_to_map (fn [t] {:word (.get t CoreAnnotations$TextAnnotation)
                             :pos (.get t CoreAnnotations$PartOfSpeechAnnotation)
                             :ner (.get t CoreAnnotations$NamedEntityTagAnnotation)
+                            :lemma (.get t CoreAnnotations$LemmaAnnotation)
                             })
 
         dep  (.get sent SemanticGraphCoreAnnotations$BasicDependenciesAnnotation)
@@ -66,4 +68,5 @@
         ]
     res
     ))
+
 
