@@ -45,8 +45,12 @@
                                   vec
                                   )
 
-        adverb-lemmas (map #(.getLemma %) adverb-words)
+        _  (if (zero? (count adverb-words))
+             (throw (ex-info "Unable to resolve an adverb equivalent." {:seeking seeking}))
+             )
         
+        adverb-lemmas (map #(.getLemma %) adverb-words)
+
         ;; And now a heuristic. How many starting characters do we have in common? And pick the one ending with ly if there is one.
         sim-score     (map
                        (fn [w]

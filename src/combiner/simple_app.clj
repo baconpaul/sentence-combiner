@@ -25,6 +25,7 @@
           (.add "A although B")
           (.add "A modified by single adjective B")
           (.add "A modified by adverb of manner B")
+          (.add "A modified by adverb from adjective in B")
           )
         
         combine
@@ -49,11 +50,12 @@
         
         run-combine
         (fn [combiner sa sb config-str]
-          (let [op (condp = combiner
+          (let [op (condp = combiner ;; Remember need to add these above also (sucky)
                      "A caused by B" combiners/combine-cause
                      "A although B" combiners/combine-although
                      "A modified by single adjective B" combiners/combine-single-adjectives
                      "A modified by adverb of manner B" combiners/combine-adverbs-of-manner
+                     "A modified by adverb from adjective in B" combiners/combine-adjectives-to-adverbs
                      :else str
                      )
 
@@ -110,4 +112,5 @@
     )
   )
 
-#_(make-simple-app)
+#_
+(make-simple-app)

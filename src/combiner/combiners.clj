@@ -1,5 +1,6 @@
 (ns combiner.combiners
   (:require [combiner.nlp-mechanics :as nlp])
+  (:require [combiner.wordnet-mechanics :as wn])
   (:require [combiner.sentence-manipulator :as sm])
   )
 
@@ -126,6 +127,58 @@
     )
   )
 
+(defn ^:private insert-adverb-to-verb
+  [ss-stmt vtgt adv]
+  (concat
+   ;; Adjective before verb - correct
+   (let [split-subj        (split-with
+                            #(not (= (clojure.string/lower-case (:word vtgt)) ;; Conjugation will make this fail
+                                     (clojure.string/lower-case  (:word %))))
+                            (drop-last (:sent  ss-stmt)))
+         
+         ;; ERROR CHECKING HERE PLEASE
+         resa   (->  (concat (first split-subj) [adv] (second split-subj))
+                     (sm/case-fix)
+                     )
+         res    (sm/sentence-string resa)
+         rnps   (sm/omit-each-punct resa)
+         ]
+     
+     (concat
+      [ {:sentence res :hint :correct } ]
+      (map (fn [v] { :sentence (sm/sentence-string  v) :hint :punctuation } ) rnps)
+      )
+     
+     )
+   ;; Adverb after noun phrase - correct
+   (try  (let [ ;; Now if we find the span of the verb phrase we can also insert it correct after that
+               vp    (sm/find-label-in-tree ss-stmt "VP")
+               np    (if (= (count vp) 1) (first vp) (throw (ex-info "Got more than one VP in statement" { :vp vp :ss-stmt ss-stmt })))
+               npch  (filter #(= (.toString (.label %)) "NP")  (.getChildrenAsList np))
+               fnp   (if (= (count npch) 1) (first npch) (throw (ex-info "Got more than one NP in VP statement" {:np np :ss-stmt ss-stmt})))
+               wrdnp (sm/tree-terminal-strings fnp)
+
+               ;; For now make a bad assumption that the last word of the nounphrase is the one we want
+               sw    (last wrdnp)
+               split-subj        (split-with
+                                  #(not (= (clojure.string/lower-case sw)
+                                           (clojure.string/lower-case (:word %))))
+                                  (drop-last (:sent  ss-stmt)))
+               resa   (->  (concat (first split-subj)  [(first (second split-subj)) adv] (rest  (second split-subj)))
+                           (sm/case-fix)
+                           )
+               res    (sm/sentence-string resa)
+               rnps   (sm/omit-each-punct resa)
+               ]
+           (concat
+            [{:sentence res :hint :correct }]
+            (map (fn [v] { :sentence (sm/sentence-string  v) :hint :punctuation } ) rnps)
+            )
+           )
+         (catch Exception  e (do (println e) [nil])))
+   )
+  )
+
 (defn combine-adverbs-of-manner
   "Paul combined the pair of sentences. Paul combined correctly. -> Paul correctly combined the pair of sentences."
   [stmt adv-clause config]
@@ -157,58 +210,60 @@
         vtgt            (first cand-vtgt)
         adv             (first cand-adv)
         ]
-    (->> (concat
-          ;; Adjective before verb - correct
-          (let [split-subj        (split-with
-                                   #(not (= (clojure.string/lower-case (:word vtgt)) ;; Conjugation will make this fail
-                                            (clojure.string/lower-case  (:word %))))
-                                   (drop-last (:sent  ss-stmt)))
-                
-                ;; ERROR CHECKING HERE PLEASE
-                resa   (->  (concat (first split-subj) [adv] (second split-subj))
-                            (sm/case-fix)
-                            )
-                res    (sm/sentence-string resa)
-                rnps   (sm/omit-each-punct resa)
-                ]
-            
-            (concat
-             [ {:sentence res :hint :correct } ]
-             (map (fn [v] { :sentence (sm/sentence-string  v) :hint :punctuation } ) rnps)
-             )
-            
-            )
-          ;; Adverb after noun phrase - correct
-          (try  (let [ ;; Now if we find the span of the verb phrase we can also insert it correct after that
-                      vp    (sm/find-label-in-tree ss-stmt "VP")
-                      np    (if (= (count vp) 1) (first vp) (throw (ex-info "Got more than one VP in statement" { :vp vp :ss-stmt ss-stmt })))
-                      npch  (filter #(= (.toString (.label %)) "NP")  (.getChildrenAsList np))
-                      fnp   (if (= (count npch) 1) (first npch) (throw (ex-info "Got more than one NP in VP statement" {:np np :ss-stmt ss-stmt})))
-                      wrdnp (sm/tree-terminal-strings fnp)
-
-                      ;; For now make a bad assumption that the last word of the nounphrase is the one we want
-                      sw    (last wrdnp)
-                      split-subj        (split-with
-                                         #(not (= (clojure.string/lower-case sw)
-                                                  (clojure.string/lower-case (:word %))))
-                                         (drop-last (:sent  ss-stmt)))
-                      resa   (->  (concat (first split-subj)  [(first (second split-subj)) adv] (rest  (second split-subj)))
-                                  (sm/case-fix)
-                                  )
-                      res    (sm/sentence-string resa)
-                      rnps   (sm/omit-each-punct resa)
-                      ]
-                  (concat
-                   [{:sentence res :hint :correct }]
-                   (map (fn [v] { :sentence (sm/sentence-string  v) :hint :punctuation } ) rnps)
-                   )
-                  )
-                (catch Exception  e (do (println e) [nil])))
-          )
-         (filter (comp not nil?))
-         )
+    (->>
+     (insert-adverb-to-verb ss-stmt vtgt adv)
+     (filter (comp not nil?))
+     )
     )
   )
 
+(defn combine-adjectives-to-adverbs
+  "She plays the piano. Her playing is beautiful. -> She plays the piano beautifully"
+  [stmt desc config]
+  (let [ss-stmt         (nlp/sentence-structure stmt) ;; For now assume they are punctuated
+        ss-desc         (nlp/sentence-structure desc)
 
+        ;; OK so the advectival sentences generally parse out with a subject which is a noun and a
+        ;; root which is an advective. So lets look for those
+        cand-vtgt       (filter #(and
+                                  (:root (:grammar %))
+                                  (or  (= "VBD" (:pos %))
+                                       (= "VBZ" (:pos %))
+                                       )
+                                  ) (:sent  ss-stmt))
+        cand-adj        (filter #(and
+                                  (:root (:grammar %))
+                                  (or
+                                   (= "JJ" (:pos %))
+                                   (= "NN" (:pos %)) ;; HACK! He was patient. misparses. so try this for now
+                                   )
+                                  ) (:sent  ss-desc))
+
+        _               (if (not (and (= 1 (count cand-adj))
+                                      (= 1 (count cand-vtgt))
+                                      ))
+                          1
+                          #_(throw (ex-info "Didn't find exactly 1 verb target and adverbal modifier in clause 2"
+                                            { :cand-vtgt cand-vtgt
+                                             :cand-adj cand-adj
+                                             :stmt stmt
+                                             :desc desc
+                                             }
+                                            ))
+                          )
+        vtgt            (first cand-vtgt)
+        adj             (first cand-adj)
+        adv             (try  {:word  (wn/nearest-adverb-from-adjective (:word adj))}
+                              (catch Exception e (do (println e) nil)) )
+        ]
+    (if (not (nil? adv))
+      (->>
+       (insert-adverb-to-verb ss-stmt vtgt adv)
+       (filter (comp not nil?))
+       )
+      {}
+      )
+    )
+
+  )
 

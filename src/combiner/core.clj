@@ -39,12 +39,23 @@
    ["Miles painted the model airplane." "He painted it carefully." {}]
    ])
 
+;; NOTE: Shares a lot with adverbs of manner once you get to the adverb.
+(def combine-adjectives-to-adverbs-samples
+  [
+   [ "She plays the piano." "Her playing is beautiful." {}]
+   [ "He smiles." "He is happy." {}]
+   [ "Lin waited for the movie to begin." "Lin was patient." {}]
+   [ "Sasha cheered." "Sasha was excited." {}]
+   ]
+  )
+
 (def combine-samples
   {
    :cause combine-cause-samples
    :although combine-although-samples
    :single-adjectives combine-single-adjectives-samples
    :adverbs-of-manner combine-adverbs-of-manner-samples
+   :adjectives-to-adverbs combine-adjectives-to-adverbs-samples
    }
   )
 
@@ -62,6 +73,7 @@
                    :although combiners/combine-although
                    :single-adjectives combiners/combine-single-adjectives
                    :adverbs-of-manner combiners/combine-adverbs-of-manner
+                   :adjectives-to-adverbs combiners/combine-adjectives-to-adverbs
                    )
              res (apply cfn smp)
              rbh (group-by :hint res)
