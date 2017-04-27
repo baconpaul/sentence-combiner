@@ -1,6 +1,8 @@
 (ns combiner.core
   (:require [combiner.combiners :as combiners])
   (:require [combiner.nlp-mechanics :as nlp])
+  (use clojure.java.io)
+  (use clojure.java.shell)
   )
 
 
@@ -59,9 +61,66 @@
    }
   )
 
+;; Lovely function for an intern to fix up.
+(defn samples-to-html []
+  (with-out-str
+    (println (clojure.string/join
+              "\n"
+              [
+               "<html><head><style type=\"text/css\">"
+               "div { font-size: 12pt; font-family: sans-serif; }"
+               ".input { margin-top: 20px; background: #eeeeff; font-weight: bold; }"
+               ".op { font-weight: normal; }"
+               ".cfg { font-weight: normal; }"
+               ".hint { background: #ffeeee; font-style: italic; }"
+               ".result { margin-left: 20px; }"
+               ".error {margin-left: 20px; font-family: courier; }"
+               "</style></head><body>"
+               ]))
+    (do
+      (doall
+       (for [[k,v] combine-samples
+             smp   v
+             ]
+         (let [cfn (condp = k
+                     :cause combiners/combine-cause
+                     :although combiners/combine-although
+                     :single-adjectives combiners/combine-single-adjectives
+                     :adverbs-of-manner combiners/combine-adverbs-of-manner
+                     :adjectives-to-adverbs combiners/combine-adjectives-to-adverbs
+                     )
+               res (apply cfn smp)
+               rbh (group-by :hint res)
+               sr  #(clojure.string/join (repeat 80 %))
+               ]
+           (println "<div class=\"input\">" (first smp) "<span class=op>" k "</span>" (second smp) "<span class=cfg>" (last smp) "</span></div>")
+           (doall 
+            (for [[rk,rv] rbh]
+              (do 
+                (println "<div class=hint>" rk "</div>")
+                (if (= rk :system-error)
+                  (doall (map  #(println "<div class=error>" (:sentence  %) "</div>") rv))
+                  (doall (map  #(println "<div class=result>" (:sentence  %) "</div>") rv))))
+              ))
+           )
+         )))
+    (println "</body></html>")
+    )
+  )
+
+(defn show-html []
+  (let [s (samples-to-html)
+        f "/tmp/comb.html"
+        ]
+    (with-open [wrtr (writer f)]
+      (.write wrtr s))
+    (sh "open" f)
+    )
+  )
 
 (defn -main []
   (do
+    (show-html)
     (println "Running samples")
     (println " ")
     (doall
@@ -94,16 +153,5 @@
          )
        ))))
 
-(-main)
-
-#_(combiners/combine-cause "We ate ice cream." "The day was hot." {})
-
-#_(combiners/combine-adverbs-of-manner "We climbed the hill." "We climbed rapidly." {})
-
-#_ (tree-seq (comp not nil?) (fn [v] (.getChildrenAsList v)) (:tree  (nlp/sentence-structure "We fed the dog ice cream.")))
-
-#_(combiners/combine-cause "Paul was happy." "Paul was writing clojure." { :NNP [["Paul" "she"]]})
-#_ (-> (nlp/sentence-structure "Patrick Henry opposed new British taxes and he gave a speech and the speech was powerful to inspire the colonists.")
-       :dep)
 
 
