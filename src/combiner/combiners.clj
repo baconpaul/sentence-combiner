@@ -19,28 +19,33 @@
                          (concat pos-cause [sm/comma (sm/insert-el "so")] pos-a)
                          (concat [(sm/insert-el "because")] pos-cause [sm/comma] pos-a)
                          ]
-                        (map sm/case-fix)
                         (map (partial  sm/multi-nnp-fix config))
-                        (map sm/sentence-string)
                         (map (fn [ v] { :sentence v :hint :correct }))
+                        (map (fn [v] (update v :sentence sm/case-fix)) )
                         )
         soso      (->> [
                         {:sentence (concat pos-cause [(sm/insert-el "and") ] pos-a) :hint :better-combiner}
                         ]
                        (map (fn [v] (update v :sentence sm/case-fix)) )
-                       (map (fn [v] (update v :sentence sm/sentence-string)) )
-
                        )
+        
         wrong     (->> [
                         {:sentence (concat pos-cause [(sm/insert-el "because") ] pos-a) :hint :wrong-order}
                         ]
                        (map (fn [v] (update v :sentence sm/case-fix)) )
-                       (map (fn [v] (update v :sentence sm/sentence-string)) )
-
                        )
+        bad-punct (->>  (for [g good]
+                          (let [bp (sm/omit-each-punct (:sentence g))]
+                            (map (fn [v] {:sentence v :hint :punctuation}) bp)
+                            )
+                          )
+                        (flatten))
         
         ]
-    (concat good soso wrong )
+    (->>
+     (concat good soso wrong bad-punct)
+     (map (fn [v] (update v :sentence sm/sentence-string)) )
+     )
     )
   
   )
@@ -175,7 +180,7 @@
             (map (fn [v] { :sentence (sm/sentence-string  v) :hint :punctuation } ) rnps)
             )
            )
-         (catch Exception  e (do (println e) [nil])))
+         (catch Exception  e (do (println e) [{ :sentence (str (.getMessage e) (ex-data e)) :hint :system-error}])))
    )
   )
 
@@ -254,16 +259,18 @@
         vtgt            (first cand-vtgt)
         adj             (first cand-adj)
         adv             (try  {:word  (wn/nearest-adverb-from-adjective (:word adj))}
-                              (catch Exception e (do (println e) nil)) )
+                              (catch Exception e (do (println e) {:exception  e})) )
         ]
-    (if (not (nil? adv))
+    (if (nil? (:exception adv))
       (->>
        (insert-adverb-to-verb ss-stmt vtgt adv)
        (filter (comp not nil?))
        )
-      {}
+      [{ :sentence (str (.getMessage (:exception adv)) " "(ex-data (:exception adv))) :hint :system-error}]
       )
     )
 
   )
 
+(:exception "hi there")
+(combine-adjectives-to-adverbs "Johnny played piano." "Johnny was cheerful." {})

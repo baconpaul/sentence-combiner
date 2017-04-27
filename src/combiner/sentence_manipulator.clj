@@ -77,6 +77,7 @@
         )))
   )
 
+;; FIX "a, thus b." should guve "a, thus b" "a thus b." and "a thus b" so all the permutations of removal.
 (defn omit-each-punct
   "Given a structured sentence, for each bit of punctuation return a new sentence with it stripped"
   [insent]
