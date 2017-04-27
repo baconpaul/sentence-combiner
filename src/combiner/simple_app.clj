@@ -4,7 +4,34 @@
   )
 
 (defn make-simple-app []
-  (let [frame
+  (let [dropdowns (partition 2 ["A caused by B"
+                                {:fn combiners/combine-cause
+                                 :ex ["Jim went to the store." "Jim needed food." "{ :NNP [[\"Jim\" \"he\" ]]}"]
+                                 }
+                                "A although B"
+                                {:fn combiners/combine-although
+                                 :ex ["I like ice cream." "I don't like warm milk." "{}"]
+                                 }
+
+                                "A modified by single adjective B"
+                                {:fn combiners/combine-single-adjectives
+                                 :ex [ "The leaves fall from the trees." "The leaves are coloful." {}]
+                                 }
+
+                                "A modified by adverb of manner B"
+                                {:fn combiners/combine-adverbs-of-manner
+                                 :ex [ "The runner ran ten miles." "He ran easily." {}]
+                                 }
+
+                                "A modified by adverb from adjective in B"
+                                {:fn  combiners/combine-adjectives-to-adverbs
+                                 :ex  [ "She plays the piano." "Her playing is beautiful." {}]
+                                 }])
+        dropdown-map (apply hash-map (flatten dropdowns)) ;; yeah that partition/flatten is dumb. Sorry
+        
+
+
+        frame
         (doto (java.awt.Frame. "Combiner Simple UI")
           (.setSize 900 800)
           (.setLayout (java.awt.BorderLayout.))
@@ -20,16 +47,22 @@
         (doto (java.awt.TextField. "{}"))
         
         combiners
-        (doto (java.awt.Choice.)
-          (.add "A caused by B")
-          (.add "A although B")
-          (.add "A modified by single adjective B")
-          (.add "A modified by adverb of manner B")
-          (.add "A modified by adverb from adjective in B")
+        (let [c (java.awt.Choice.)]
+          (doall (map #(.add c (first %)) dropdowns))
+          c
           )
-        
+
+        combine-button
+        (doto (java.awt.Button. "Combine"))
+
+        example-button
+        (doto (java.awt.Button. "Populate with Example"))
+
         combine
-        (doto (java.awt.Button. "Combine")
+        (doto (java.awt.Panel.)
+          (.setLayout (java.awt.GridLayout. 1 2))
+          (.add combine-button)
+          (.add example-button)
           )
 
         input-panel
@@ -50,14 +83,7 @@
         
         run-combine
         (fn [combiner sa sb config-str]
-          (let [op (condp = combiner ;; Remember need to add these above also (sucky)
-                     "A caused by B" combiners/combine-cause
-                     "A although B" combiners/combine-although
-                     "A modified by single adjective B" combiners/combine-single-adjectives
-                     "A modified by adverb of manner B" combiners/combine-adverbs-of-manner
-                     "A modified by adverb from adjective in B" combiners/combine-adjectives-to-adverbs
-                     :else str
-                     )
+          (let [op (:fn (get dropdown-map combiner))
 
                 res (op sa sb (binding [*read-eval* false ] (read-string config-str)))
                 rbh (group-by :hint res)
@@ -82,9 +108,20 @@
             (.setText output-area as-str)
             )
           )
+
+        populate-example
+        (fn []
+          (let [comb (.getSelectedItem combiners)
+                ex   (:ex (get dropdown-map comb))
+                ]
+            (.setText sent-a (nth ex 0))
+            (.setText sent-b (nth ex 1))
+            (.setText config (nth ex 2))
+            )
+          )
         
         _
-        (doto combine
+        (doto combine-button
           (.addActionListener
            (proxy [java.awt.event.ActionListener] []
              (actionPerformed [e]
@@ -93,6 +130,15 @@
              )
            )
           )
+
+        _
+        (doto example-button
+          (.addActionListener
+           (proxy [java.awt.event.ActionListener] []
+             (actionPerformed [e]
+               (populate-example)
+               )
+             )))
         _
         (doto frame
           (.add input-panel java.awt.BorderLayout/NORTH)
@@ -112,5 +158,5 @@
     )
   )
 
-#_
-(make-simple-app)
+#_(make-simple-app)
+

@@ -180,7 +180,7 @@
             (map (fn [v] { :sentence (sm/sentence-string  v) :hint :punctuation } ) rnps)
             )
            )
-         (catch Exception  e (do (println e) [{ :sentence (str (.getMessage e) (ex-data e)) :hint :system-error}])))
+         (catch Exception  e (do [{ :sentence (str (.getMessage e) (ex-data e)) :hint :system-error}])))
    )
   )
 
@@ -259,7 +259,7 @@
         vtgt            (first cand-vtgt)
         adj             (first cand-adj)
         adv             (try  {:word  (wn/nearest-adverb-from-adjective (:word adj))}
-                              (catch Exception e (do (println e) {:exception  e})) )
+                              (catch Exception e (do {:exception  e})) )
         ]
     (if (nil? (:exception adv))
       (->>
@@ -272,5 +272,3 @@
 
   )
 
-(:exception "hi there")
-(combine-adjectives-to-adverbs "Johnny played piano." "Johnny was cheerful." {})
