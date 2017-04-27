@@ -26,7 +26,13 @@
                                 "A modified by adverb from adjective in B"
                                 {:fn  combiners/combine-adjectives-to-adverbs
                                  :ex  [ "She plays the piano." "Her playing is beautiful." {}]
-                                 }])
+                                 }
+
+                                "A and B"
+                                {:fn  combiners/combine-and
+                                 :ex  [ "Some penguins eat fish." "Some eat squid." {}]
+                                 }
+                                ])
         dropdown-map (apply hash-map (flatten dropdowns)) ;; yeah that partition/flatten is dumb. Sorry
         
 

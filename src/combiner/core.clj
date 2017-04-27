@@ -51,6 +51,11 @@
    ]
   )
 
+(def combine-and-samples
+  [
+   [ "Some penguins eat fish." "Some eat squid." {} ]
+   ])
+
 (def combine-samples
   {
    :cause combine-cause-samples

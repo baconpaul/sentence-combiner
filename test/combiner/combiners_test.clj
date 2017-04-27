@@ -30,3 +30,10 @@
     (is (= (:sentence (first r)) "I correctly combined sentences."))
     )
   )
+
+(deftest basic-combine-and
+  (let [r (c/combine-and "Some penguins eat fish." "Some eat squid." {})]
+    (is (= (:sentence (first r)) "Some penguins eat fish, and some eat squid."))
+    (is (= (:hint (first r)) :correct))
+    )
+  )

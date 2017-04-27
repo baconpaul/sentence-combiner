@@ -272,3 +272,34 @@
 
   )
 
+(defn combine-and
+  "Some penguins eat fish. Some eat squid. Some penguins eat fish, and some eat squid. With lots of variations"
+  [stmt-a stmt-b config]
+  (let [ss-a         (nlp/sentence-structure stmt-a) ;; For now assume they are punctuated
+        ss-b         (nlp/sentence-structure stmt-b)
+
+        cf   (fn [v] (->> v (map #(update % :sentence sm/case-fix))))
+        
+        correct      (cf [ { :sentence (concat (drop-last  (:sent  ss-a)) [ sm/comma (sm/insert-el "and")] (:sent  ss-b))  :hint :correct}]
+                         )
+
+        wrong-comb   (cf (map (fn [v] { :sentence (concat (drop-last  (:sent  ss-a)) [ sm/comma (sm/insert-el v)] (:sent  ss-b))
+                                       :hint :wrong-combining-word}) [ "but" "or" "so"])
+                         )
+
+        wrong-punct-explicit (cf [ { :sentence (concat (drop-last  (:sent  ss-a)) [  (sm/insert-el "and") sm/comma] (:sent  ss-b))  :hint :punctuation}]
+                                 )
+        
+
+        ]
+    (->>
+     (concat 
+      correct
+      wrong-comb
+      wrong-punct-explicit
+      )
+     (map #(update % :sentence sm/sentence-string))
+     )
+    )
+  )
+
